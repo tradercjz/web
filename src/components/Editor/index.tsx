@@ -90,6 +90,8 @@ export function Editor ({
             minimap: { enabled: minimap },
             
             fixedOverflowWidgets: true,
+
+            accessibilitySupport: 'on',
             
             acceptSuggestionOnEnter: enter_completion ? 'on' : 'off',
             

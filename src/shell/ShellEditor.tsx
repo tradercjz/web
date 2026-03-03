@@ -191,6 +191,75 @@ export function ShellEditor ({ collapser }) {
                     ? shell.tabs.find(t => t.index === shell.itab).code
                     : localStorage.getItem(storage_keys.code) || ''
                 )
+
+                function dispatch_selection_changed () {
+                    try {
+                        const model = editor.getModel()
+                        const selection = editor.getSelection()
+                        if (!model || !selection) {
+                            window.dispatchEvent(new CustomEvent('monaco-selection-changed', {
+                                detail: null
+                            }))
+                            return
+                        }
+
+                        const text = model.getValueInRange(selection)
+
+                        if (!text?.trim()) {
+                            window.dispatchEvent(new CustomEvent('monaco-selection-changed', {
+                                detail: null
+                            }))
+                            return
+                        }
+
+                        const dom = editor.getDomNode()
+                        const dom_rect = dom?.getBoundingClientRect()
+
+                        const end_pos = selection.getEndPosition()
+                        const visible_pos = editor.getScrolledVisiblePosition(end_pos)
+
+                        const x = dom_rect && visible_pos ? dom_rect.left + visible_pos.left : undefined
+                        const y = dom_rect && visible_pos ? dom_rect.top + visible_pos.top + visible_pos.height : undefined
+
+                        const rect = (x !== undefined && y !== undefined && visible_pos)
+                            ? {
+                                left: x,
+                                top: y - visible_pos.height,
+                                right: x,
+                                bottom: y,
+                                width: 0,
+                                height: visible_pos.height
+                            }
+                            : (dom_rect ? {
+                                left: dom_rect.left,
+                                top: dom_rect.top,
+                                right: dom_rect.right,
+                                bottom: dom_rect.bottom,
+                                width: dom_rect.width,
+                                height: dom_rect.height
+                            } : undefined)
+
+                        window.dispatchEvent(new CustomEvent('monaco-selection-changed', {
+                            detail: {
+                                text,
+                                rect,
+                                x,
+                                y
+                            }
+                        }))
+                    } catch (error) {
+                        // ignore
+                    }
+                }
+
+                editor.onDidChangeCursorSelection(() => {
+                    dispatch_selection_changed()
+                })
+                editor.onDidBlurEditorWidget(() => {
+                    window.dispatchEvent(new CustomEvent('monaco-selection-changed', {
+                        detail: null
+                    }))
+                })
                 
                 async function execute (selection: 'line' | 'all') {
                     if (shell.executing)
