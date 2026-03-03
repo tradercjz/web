@@ -1048,20 +1048,40 @@ export class Database implements DataNode {
                         model.node_type !== NodeType.computing && 
                     <Tooltip title={t('查看用户权限')} color='grey' destroyOnHidden>
                         <Icon
+                            role='button'
+                            tabIndex={0}
+                            aria-label={t('查看用户权限')}
                             component={SvgAccess}
                             onClick={async event => { 
                                 event.stopPropagation()
                                 await NiceModal.show(AccessModal, { database: this }) 
-                            }} 
+                            }}
+                            onKeyDown={async event => {
+                                if (event.key !== 'Enter' && event.key !== ' ')
+                                    return
+                                event.preventDefault()
+                                event.stopPropagation()
+                                await NiceModal.show(AccessModal, { database: this })
+                            }}
                         />
                     </Tooltip> 
                 }
                 <Tooltip title={enable_create_table ? t('创建数据表') : t('仅支持单机节点和数据节点创建数据表')} color='grey' destroyOnHidden>
                     <Icon
+                        role='button'
+                        tabIndex={0}
+                        aria-label={enable_create_table ? t('创建数据表') : t('仅支持单机节点和数据节点创建数据表')}
                         disabled={!enable_create_table}
                         className={enable_create_table ? '' : 'disabled'}
                         component={SvgCreateTable}
-                        onClick={onclick_create_table} 
+                        onClick={onclick_create_table}
+                        onKeyDown={event => {
+                            if (event.key !== 'Enter' && event.key !== ' ')
+                                return
+                            event.preventDefault()
+                            event.stopPropagation()
+                            onclick_create_table(event as any)
+                        }}
                     />
                 </Tooltip>
             </div>
