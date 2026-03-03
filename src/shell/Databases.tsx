@@ -215,6 +215,31 @@ export function Databases () {
                             
                             treeData={dbs}
                             
+                            titleRender={(nodeData) => {
+                                // 为每个树节点添加可访问性属性
+                                return (
+                                    <div
+                                        role='treeitem'
+                                        tabIndex={0}
+                                        aria-label={typeof nodeData.title === 'string' ? nodeData.title : undefined}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault()
+                                                // 触发 Tree 的 onClick 事件
+                                                const event = new MouseEvent('click', {
+                                                    bubbles: true,
+                                                    cancelable: true
+                                                })
+                                                e.currentTarget.dispatchEvent(event)
+                                            }
+                                        }}
+                                        style={{ width: '100%' }}
+                                    >
+                                        {nodeData.title}
+                                    </div>
+                                )
+                            }}
+                            
                             loadedKeys={loaded_keys}
                             loadData={async (node: EventDataNode<Catalog | DatabaseGroup | Database | Table | ColumnRoot | PartitionRoot | Column | PartitionDirectory | PartitionFile>) => {
                                 try {
