@@ -24,9 +24,23 @@ export function ExecuteAction () {
         <span
             className='action execute'
             title={executing ? t('点击可以取消当前执行中的作业') : t('执行选中代码或全部代码')}
+            role='button'
+            tabIndex={0}
+            aria-label={executing ? t('取消执行') : t('执行')}
             onClick={async () => {
                 try {
                     // shell 上的 executing 状态才是最新的
+                    if (!shell.executing)
+                        await shell.execute('all')
+                } catch (error) {
+                    // 忽略用户执行脚本的报错
+                }
+            }}
+            onKeyDown={async (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ')
+                    return
+                event.preventDefault()
+                try {
                     if (!shell.executing)
                         await shell.execute('all')
                 } catch (error) {

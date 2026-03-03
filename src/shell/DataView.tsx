@@ -14,7 +14,12 @@ export function DataView () {
     const { result } = shell.use(['result'])
     const { options, product_name } = model.use(['options', 'product_name'])
     
-    return <div className='dataview obj-result themed embed'>{
+    return <div
+        className='dataview obj-result themed embed'
+        role='region'
+        tabIndex={0}
+        aria-label='Output'
+    >{
         (() => {
             if (!result)
                 return

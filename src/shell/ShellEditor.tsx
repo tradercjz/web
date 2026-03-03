@@ -152,7 +152,17 @@ export function ShellEditor ({ collapser }) {
             
             <div
                 className='collapse-btn'
+                role='button'
+                tabIndex={0}
+                aria-label={collapsed ? t('显示终端') : t('隐藏终端')}
                 onClick={() => {
+                    set_collapsed(!collapsed)
+                    collapser(collapsed)
+                }}
+                onKeyDown={(event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ')
+                        return
+                    event.preventDefault()
                     set_collapsed(!collapsed)
                     collapser(collapsed)
                 }}
@@ -337,7 +347,19 @@ export function Tabs ({
             />
         )}
         {show_add_button && 
-            <div className='add-tab' onClick={on_add_tab}>
+            <div
+                className='add-tab'
+                role='button'
+                tabIndex={0}
+                aria-label={t('新增标签页')}
+                onClick={on_add_tab}
+                onKeyDown={(event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ')
+                        return
+                    event.preventDefault()
+                    on_add_tab?.()
+                }}
+            >
                 <PlusOutlined style={{ fontSize: 12 }} />
             </div>
         }
@@ -374,7 +396,16 @@ export function Tab ({
     
     return <div
         className={`tab ${active ? 'active' : ''}`}
+        role='tab'
+        tabIndex={0}
+        aria-selected={active}
         onClick={onClick}
+        onKeyDown={(event) => {
+            if (event.key !== 'Enter' && event.key !== ' ')
+                return
+            event.preventDefault()
+            onClick()
+        }}
     >
         {icon && <div className='tab-icon'>{icon}</div>}
         {renaming ? 
@@ -398,7 +429,17 @@ export function Tab ({
         }
         {closeable && <div
             className='close-icon'
+            role='button'
+            tabIndex={0}
+            aria-label={t('关闭标签页')}
             onClick={event => {
+                event.stopPropagation()
+                onClose?.()
+            }}
+            onKeyDown={event => {
+                if (event.key !== 'Enter' && event.key !== ' ')
+                    return
+                event.preventDefault()
                 event.stopPropagation()
                 onClose?.()
             }}

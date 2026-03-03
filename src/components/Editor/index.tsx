@@ -107,7 +107,12 @@ export function Editor ({
             
             dolphinDBLanguageOptions={{ docs, theme }}
             
-            wrapperProps={{ className: `monaco-editor-container ${theme}` }}
+            wrapperProps={{
+                className: `monaco-editor-container ${theme}`,
+                role: 'textbox',
+                tabIndex: 0,
+                'aria-label': t('代码编辑器')
+            }}
             
             value={value}
             
