@@ -206,7 +206,7 @@ export function Databases () {
                         <Tree
                             className='database-tree'
                             showIcon
-                            focusable={false}
+                            focusable={true}
                             blockNode
                             showLine
                             
@@ -215,11 +215,14 @@ export function Databases () {
                             
                             treeData={dbs}
                             
+                            // 为 Tree 节点添加可访问性
+                            selectable={false}
+                            
                             titleRender={(nodeData) => {
                                 // 为每个树节点添加可访问性属性
                                 return (
                                     <div
-                                        role='treeitem'
+                                        role='button'
                                         tabIndex={0}
                                         aria-label={typeof nodeData.title === 'string' ? nodeData.title : undefined}
                                         onKeyDown={(e) => {
@@ -233,7 +236,7 @@ export function Databases () {
                                                 e.currentTarget.dispatchEvent(event)
                                             }
                                         }}
-                                        style={{ width: '100%' }}
+                                        style={{ width: '100%', display: 'flex', alignItems: 'center' }}
                                     >
                                         {nodeData.title}
                                     </div>
