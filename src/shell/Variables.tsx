@@ -157,12 +157,34 @@ export function Variables ({ shared }: { shared?: boolean }) {
     return <div className='panel'>
         <div className='type'>{shared ? t('共享变量') : t('本地变量')}
             <span className='extra'>
-                <span onClick={shell.refresh_vars}>
+                <span 
+                    role='button'
+                    tabIndex={0}
+                    aria-label={t('刷新')}
+                    onClick={shell.refresh_vars}
+                    onKeyDown={(event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ')
+                            return
+                        event.preventDefault()
+                        shell.refresh_vars()
+                    }}
+                >
                     <Tooltip title={t('刷新')} color='grey'>
                         <SyncOutlined spin={refresh_spin}/>
                     </Tooltip>
                 </span>
-                <span onClick={() => { set_expanded_keys([ ]) }}>
+                <span 
+                    role='button'
+                    tabIndex={0}
+                    aria-label={t('全部折叠')}
+                    onClick={() => { set_expanded_keys([ ]) }}
+                    onKeyDown={(event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ')
+                            return
+                        event.preventDefault()
+                        set_expanded_keys([ ])
+                    }}
+                >
                     <Tooltip title={t('全部折叠')} color='grey'>
                     <MinusSquareOutlined />
                     </Tooltip>

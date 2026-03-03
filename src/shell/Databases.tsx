@@ -125,10 +125,22 @@ export function Databases () {
                 <div className='type'>
                     {t('数据库')}
                     <span className='extra'>
-                        <span onClick={() => {
-                            if (enable_create_db)
-                                shell.set({ create_database_modal_visible: true })
-                        }}>
+                        <span 
+                            role='button'
+                            tabIndex={0}
+                            aria-label={enable_create_db ? t('创建数据库') : t('仅支持单机节点和数据节点创建数据库')}
+                            onClick={() => {
+                                if (enable_create_db)
+                                    shell.set({ create_database_modal_visible: true })
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key !== 'Enter' && event.key !== ' ')
+                                    return
+                                event.preventDefault()
+                                if (enable_create_db)
+                                    shell.set({ create_database_modal_visible: true })
+                            }}
+                        >
                             <Tooltip title={enable_create_db ? t('创建数据库') : t('仅支持单机节点和数据节点创建数据库')} color='grey'>
                                 <Icon 
                                     className={cn('create-database-icon', { disabled: !enable_create_db })}
@@ -137,19 +149,52 @@ export function Databases () {
                                 />
                             </Tooltip>
                         </span>
-                        {v3 && <span onClick={() => {
-                            shell.set({ create_catalog_modal_visible: true })
-                        }}>
+                        {v3 && <span 
+                            role='button'
+                            tabIndex={0}
+                            aria-label={t('创建 catalog')}
+                            onClick={() => {
+                                shell.set({ create_catalog_modal_visible: true })
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key !== 'Enter' && event.key !== ' ')
+                                    return
+                                event.preventDefault()
+                                shell.set({ create_catalog_modal_visible: true })
+                            }}
+                        >
                             <Tooltip title={t('创建 catalog')} color='grey'>
                                 <Icon className='create-database-icon' component={SvgCreateCatalog} />
                             </Tooltip>
                         </span>}
-                        <span onClick={shell.refresh_db}>
+                        <span 
+                            role='button'
+                            tabIndex={0}
+                            aria-label={t('刷新')}
+                            onClick={shell.refresh_db}
+                            onKeyDown={(event) => {
+                                if (event.key !== 'Enter' && event.key !== ' ')
+                                    return
+                                event.preventDefault()
+                                shell.refresh_db()
+                            }}
+                        >
                             <Tooltip title={t('刷新')} color='grey'>
                                 <SyncOutlined spin={refresh_spin}/>
                             </Tooltip>
                         </span>
-                        <span onClick={() => { set_expanded_keys([ ]) }}>
+                        <span 
+                            role='button'
+                            tabIndex={0}
+                            aria-label={t('全部折叠')}
+                            onClick={() => { set_expanded_keys([ ]) }}
+                            onKeyDown={(event) => {
+                                if (event.key !== 'Enter' && event.key !== ' ')
+                                    return
+                                event.preventDefault()
+                                set_expanded_keys([ ])
+                            }}
+                        >
                             <Tooltip title={t('全部折叠')} color='grey'>
                                 <MinusSquareOutlined />
                             </Tooltip>
