@@ -38,7 +38,7 @@ import {
 import { DdbVar } from './Variables.tsx'
 
 
-type Result = { type: 'object', data: DdbObj } | { type: 'objref', data: DdbObjRef } | { type: 'lineage' }
+type Result = { type: 'object', data: DdbObj } | { type: 'objref', data: DdbObjRef } | { type: 'lineage' } | { type: 'stream', text: string, error?: string }
 
 
 class ShellModel extends Model<ShellModel> {
@@ -175,13 +175,22 @@ class ShellModel extends Model<ShellModel> {
                 ddbobj.form === DdbForm.table ||
                 ddbobj.form === DdbForm.vector ||
                 ddbobj.form === DdbForm.tensor
-            )
+            ) {
+                if (ddbobj.form === DdbForm.dict) {
+                    const streamFlag = this.getDictValue(ddbobj, '__stream__')
+                    if (streamFlag === true) {
+                        this.handleStreamResponse(ddbobj)
+                        return
+                    }
+                }
+                
                 this.set({
                     result: {
                         type: 'object',
                         data: ddbobj
                     },
                 })
+            }
             
             if (print)
                 this.term.writeln(
@@ -876,6 +885,97 @@ class ShellModel extends Model<ShellModel> {
     }
     
     
+    getDictValue(ddbobj: DdbObj, keyName: string): any {
+        if (!ddbobj || ddbobj.form !== DdbForm.dict || !Array.isArray(ddbobj.value) || ddbobj.value.length < 2) return undefined;
+        const keysVector = (ddbobj.value as any)[0] as DdbObj;
+        const valuesVector = (ddbobj.value as any)[1] as DdbObj;
+        if (!keysVector || !valuesVector || !Array.isArray(keysVector.value) || !Array.isArray(valuesVector.value)) return undefined;
+        const keys = keysVector.value as string[];
+        const values = valuesVector.value as any[];
+        const idx = keys.indexOf(keyName);
+        if (idx !== -1) {
+            return values[idx]?.value;
+        }
+        return undefined;
+    }
+
+    async handleStreamResponse(ddbobj: DdbObj) {
+        const requestId = this.getDictValue(ddbobj, 'requestId');
+        const sseUrl    = this.getDictValue(ddbobj, 'sseUrl');
+        const token     = this.getDictValue(ddbobj, 'token');
+
+        if (!requestId) return;
+
+        let accumulated = '';
+        this.set({ result: { type: 'stream', text: '' } });
+
+        if (sseUrl && token) {
+            await this.streamViaSSE(sseUrl, requestId, token, accumulated);
+        } else {
+            await this.streamViaPoll(requestId, accumulated);
+        }
+    }
+
+    async streamViaSSE(sseUrl: string, rid: string, token: string, accumulated: string) {
+        return new Promise<void>((resolve, reject) => {
+            const url = `${sseUrl}?rid=${rid}&token=${encodeURIComponent(token)}`;
+            const es = new EventSource(url);
+
+            es.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.delta) {
+                        accumulated += data.delta;
+                        this.set({ result: { type: 'stream', text: accumulated } });
+                    }
+                    if (data.done) {
+                        es.close();
+                        resolve();
+                    }
+                    if (data.error) {
+                        es.close();
+                        this.set({ result: { type: 'stream', text: accumulated, error: data.error } });
+                        resolve();
+                    }
+                } catch (e) {
+                    // Ignore non-JSON
+                }
+            };
+
+            es.onerror = () => {
+                es.close();
+                this.streamViaPoll(rid, accumulated).then(resolve);
+            };
+        });
+    }
+
+    async streamViaPoll(rid: string, accumulated: string) {
+        while (true) {
+            try {
+                const pollResult = await model.ddb.eval(`agentOS::poll("${rid}")`);
+                const delta = this.getDictValue(pollResult, 'delta');
+                const done  = this.getDictValue(pollResult, 'done');
+                const error = this.getDictValue(pollResult, 'error');
+
+                if (delta) {
+                    accumulated += delta;
+                    this.set({ result: { type: 'stream', text: accumulated } });
+                }
+                if (done) {
+                    if (error) {
+                        this.set({ result: { type: 'stream', text: accumulated, error } });
+                    }
+                    break;
+                }
+            } catch (e) {
+                const errorMessage = e instanceof Error ? e.message : String(e);
+                this.set({ result: { type: 'stream', text: accumulated, error: errorMessage } });
+                break;
+            }
+            await delay(50);
+        }
+    }
+
     async define_get_user_grant () {
         if (this.get_access_defined)
             return

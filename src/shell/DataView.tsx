@@ -7,14 +7,26 @@ import { model } from '@model'
 import { ExportCsv } from '@components/ExportCsv.tsx'
 import { LineageGraph } from '@/lineage/index.tsx'
 
+import { marked } from 'marked'
+
+import { useEffect, useRef } from 'react'
+
 import { shell } from './model.ts'
 
 
 export function DataView () {
     const { result } = shell.use(['result'])
     const { options, product_name } = model.use(['options', 'product_name'])
+    const containerRef = useRef<HTMLDivElement>(null)
     
+    useEffect(() => {
+        if (result?.type === 'stream' && containerRef.current) {
+            containerRef.current.scrollTop = containerRef.current.scrollHeight;
+        }
+    }, [result])
+
     return <div
+        ref={containerRef}
         className='dataview obj-result themed embed'
         role='region'
         tabIndex={0}
@@ -28,6 +40,14 @@ export function DataView () {
             
             if (type === 'lineage')
                 return <LineageGraph />
+            
+            if (type === 'stream') {
+                const { text, error } = result
+                return <div className="stream-result" style={{ padding: '15px' }}>
+                    <div className='markdown' dangerouslySetInnerHTML={{ __html: text ? marked.parse(text as string) as string : '' }} />
+                    {error && <div className='error' style={{ color: 'var(--ant-error-color, #ff4d4f)', marginTop: '10px' }}>{error}</div>}
+                </div>
+            }
             
             const { data } = result
             
